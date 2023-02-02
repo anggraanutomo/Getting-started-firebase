@@ -1,6 +1,9 @@
 import {initializeApp} from 'firebase/app'
 import {
-    getFirestore, collection, getDocs, addDoc, deleteDoc, doc
+    getFirestore, collection, onSnapshot,
+    getDocs, addDoc, deleteDoc, doc,
+    query, where, orderBy, serverTimestamp,
+    getDoc
 } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -21,18 +24,18 @@ const db = getFirestore()
 // collection ref
 const colRef = collection(db, 'books')
 
-// get collection data
-getDocs(colRef)
-    .then((snapshot) => {
-        let books = []
-        snapshot.docs.forEach((doc) => {
-            books.push({...doc.data(), id: doc.id})
-        })
-        console.log(books)
+
+// queries
+const q = query(colRef, orderBy('createdAt'))
+
+// real time collection data
+onSnapshot(colRef, (snapshot) => {
+    let books = []
+    snapshot.docs.forEach((doc) => {
+        books.push({...doc.data(), id: doc.id})
     })
-    .catch(err => {
-        console.log(err.message)
-    })
+    console.log(books)
+})
 
 // adding documents
 const addBookForm = document.querySelector('.add')
@@ -41,7 +44,8 @@ addBookForm.addEventListener('submit', (e) => {
 
     addDoc(colRef, {
         title: addBookForm.title.value,
-        author: addBookForm.author.value
+        author: addBookForm.author.value,
+        createdAt: serverTimestamp()
     })
         .then(() => {
             addBookForm.reset()
@@ -61,3 +65,11 @@ deleteBookForm.addEventListener('submit', (e) => {
         })
 
 })
+
+// get a single document
+const docRef = doc(db, 'books', '22lEKcLGoikcZ7voKh9w')
+
+onSnapshot(docRef, (doc) => {
+    console.log(doc.data(), doc.id)
+})
+
